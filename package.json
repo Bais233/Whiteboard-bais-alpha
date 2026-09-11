@@ -1,0 +1,19 @@
+{
+  "name": "whiteboard-bais-alpha",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A floating whiteboard for recording, drawing, and mathematical drafts.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node tools/serve.mjs",
+    "build": "node tools/build.mjs",
+    "test": "node --test tools/unit.test.mjs",
+    "test:e2e": "node tools/e2e.mjs"
+  },
+  "devDependencies": {
+    "@sparticuz/chromium": "^131.0.0",
+    "esbuild": "^0.28.2",
+    "playwright": "^1.49.1"
+  }
+}

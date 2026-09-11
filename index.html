@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="color-scheme" content="light dark" />
+<meta name="description" content="Whiteboard bais alpha —— 可悬浮、可缩放、支持数学草稿与笔迹回放的白色画板。" />
+<title>白色画板 · Whiteboard bais alpha</title>
+<link rel="stylesheet" href="assets/whiteboard.css" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='4' width='28' height='24' rx='4' fill='%23ffffff' stroke='%23334155' stroke-width='2'/%3E%3Cpath d='M8 21l5-8 4 5 3-3 4 6' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+</head>
+<body>
+<!-- ===== SVG 图标精灵 ===== -->
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="i-select" viewBox="0 0 24 24"><path d="M6 3.5 18.5 11 12.8 12.4 10 18.5 6 3.5Z" fill="currentColor" stroke="none" /></symbol>
+  <symbol id="i-hand" viewBox="0 0 24 24"><path d="M8 12V6.5a1.5 1.5 0 0 1 3 0V11m0-1V5.5a1.5 1.5 0 0 1 3 0V11m0-.5V7a1.5 1.5 0 0 1 3 0v7.5c0 3.3-2.4 6-5.7 6-2.2 0-3.6-1-4.8-2.6L5 14.2a1.6 1.6 0 0 1 2.5-2L8 13" /></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20l4-1 10.5-10.5a2.1 2.1 0 0 0-3-3L5 16l-1 4Z" /><path d="M14.5 6.5l3 3" /></symbol>
+  <symbol id="i-highlighter" viewBox="0 0 24 24"><path d="M9 14 4.5 18.5 4 21l2.5-.5L11 16" /><path d="m10.5 5.5 8 8-5 5-8-8 5-5Z" /><path d="M3 21h18" /></symbol>
+  <symbol id="i-eraser" viewBox="0 0 24 24"><path d="m8.5 20.5-4-4a2 2 0 0 1 0-2.8l8-8a2 2 0 0 1 2.8 0l4 4a2 2 0 0 1 0 2.8l-8 8H8.5Z" /><path d="M21 20.5H11" /><path d="m9 9 6 6" /></symbol>
+  <symbol id="i-line" viewBox="0 0 24 24"><path d="M5 19 19 5" /><circle cx="5" cy="19" r="1.6" fill="currentColor" stroke="none" /><circle cx="19" cy="5" r="1.6" fill="currentColor" stroke="none" /></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 19 19 5" /><path d="M19 11V5h-6" /></symbol>
+  <symbol id="i-rect" viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="2" /></symbol>
+  <symbol id="i-ellipse" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8" ry="6" /></symbol>
+  <symbol id="i-text" viewBox="0 0 24 24"><path d="M5 6h14" /><path d="M12 6v13" /><path d="M9 19h6" /></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M5 4h14v10l-5 5H5V4Z" /><path d="M19 14h-5v5" /><path d="M8 8h8M8 11h5" /></symbol>
+  <symbol id="i-laser" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" /></symbol>
+  <symbol id="i-fx" viewBox="0 0 24 24"><path d="M14 4c-2.5 0-3.6 1.4-4.2 3.6L7.6 15c-.6 2.3-1.6 3.4-3.6 3.4" /><path d="M6 10h8" /><path d="M17 20c2-1.6 3.2-3.6 3.2-6s-1.2-3.4-2.6-3.4c-1.5 0-2.6 1.3-2.6 3.4 0 3.3 2 5.3 5.2 6" /></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M4 9h10a5 5 0 0 1 0 10h-4" /><path d="M8 5 4 9l4 4" /></symbol>
+  <symbol id="i-redo" viewBox="0 0 24 24"><path d="M20 9H10a5 5 0 0 0 0 10h4" /><path d="m16 5 4 4-4 4" /></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16" /><path d="M9 7V4.5h6V7" /><path d="M6 7l1 13h10l1-13" /><path d="M10 11v6M14 11v6" /></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v10" /><path d="m8 11 4 4 4-4" /><path d="M5 19h14" /></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V6" /><path d="m8 9 4-4 4 4" /><path d="M5 19h14" /></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16M9 4v16M15 4v16" /></symbol>
+  <symbol id="i-zoom-in" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /><path d="M11 8.5v5M8.5 11h5" /></symbol>
+  <symbol id="i-zoom-out" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /><path d="M8.5 11h5" /></symbol>
+  <symbol id="i-fit" viewBox="0 0 24 24"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4" /><rect x="8.5" y="9.5" width="7" height="5" rx="1" /></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5 18 12 8 18.5v-13Z" /></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1.5" /></symbol>
+  <symbol id="i-record" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5.5" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="8.5" /></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" /><path d="M9.8 9.5a2.3 2.3 0 1 1 3.2 2.1c-.7.3-1 .9-1 1.7v.4" /><circle cx="12" cy="17" r="1" fill="currentColor" stroke="none" /></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></symbol>
+  <symbol id="i-grip" viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><circle cx="9" cy="6" r="1.4" /><circle cx="15" cy="6" r="1.4" /><circle cx="9" cy="12" r="1.4" /><circle cx="15" cy="12" r="1.4" /><circle cx="9" cy="18" r="1.4" /><circle cx="15" cy="18" r="1.4" /></g></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M15 5.5A1.5 1.5 0 0 0 13.5 4H6a2 2 0 0 0-2 2v7.5A1.5 1.5 0 0 0 5.5 15" /></symbol>
+  <symbol id="i-front" viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2" /><path d="M5 15V6a1 1 0 0 1 1-1h9" /></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><rect x="5" y="5" width="11" height="11" rx="2" /><path d="M19 9v9a1 1 0 0 1-1 1H9" /></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12Z" /><circle cx="12" cy="12" r="2.6" /></symbol>
+  <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M4 4l16 16" /><path d="M9.9 5.2A9.7 9.7 0 0 1 12 5c6 0 9.5 5.5 9.5 5.5a17 17 0 0 1-2.6 3.2" /><path d="M6.3 7.6A16.7 16.7 0 0 0 2.5 10.5S6 16 12 16a9 9 0 0 0 3-.5" /></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h14" /></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" /></symbol>
+  <symbol id="i-magnet" viewBox="0 0 24 24"><path d="M6 4v8a6 6 0 0 0 12 0V4" /><path d="M6 9h4M14 9h4" /><path d="M6 4h4v5H6zM14 4h4v5h-4z" /></symbol>
+  <symbol id="i-fill" viewBox="0 0 24 24"><path d="M6 13.5 13.5 6l4.5 4.5L10.5 18H6v-4.5Z" /><path d="M19 15c1 1.6 1.5 2.6 1.5 3.4a1.5 1.5 0 0 1-3 0c0-.8.5-1.8 1.5-3.4Z" /></symbol>
+</svg>
+
+<div id="app" class="app" data-theme="light">
+  <canvas id="board" class="board" tabindex="0" aria-label="白色画板，可用键盘与鼠标绘制"></canvas>
+
+  <!-- 文字编辑浮层 -->
+  <textarea id="textEditor" class="text-editor" spellcheck="false" hidden></textarea>
+
+  <!-- ===== 顶部状态条 ===== -->
+  <header class="topbar" id="topbar">
+    <div class="topbar__brand" title="Whiteboard bais alpha">
+      <span class="dot"></span>
+      <span class="topbar__title">白色画板</span>
+      <span class="topbar__sub">bais · alpha</span>
+    </div>
+
+    <div class="topbar__group" role="group" aria-label="历史">
+      <button class="btn btn--icon" id="btnUndo" title="撤销 (Ctrl+Z)" aria-label="撤销"><svg class="icon"><use href="#i-undo" /></svg></button>
+      <button class="btn btn--icon" id="btnRedo" title="重做 (Ctrl+Y)" aria-label="重做"><svg class="icon"><use href="#i-redo" /></svg></button>
+    </div>
+
+    <div class="topbar__group" role="group" aria-label="视图">
+      <button class="btn btn--icon" id="btnZoomOut" title="缩小 (−)" aria-label="缩小"><svg class="icon"><use href="#i-zoom-out" /></svg></button>
+      <button class="btn btn--text" id="btnZoomLabel" title="恢复到 100% (0)">100%</button>
+      <button class="btn btn--icon" id="btnZoomIn" title="放大 (+)" aria-label="放大"><svg class="icon"><use href="#i-zoom-in" /></svg></button>
+      <button class="btn btn--icon" id="btnFit" title="适应内容 (1)" aria-label="适应内容"><svg class="icon"><use href="#i-fit" /></svg></button>
+      <button class="btn btn--icon" id="btnGrid" title="网格 (G)" aria-label="网格" aria-pressed="true"><svg class="icon"><use href="#i-grid" /></svg></button>
+      <button class="btn btn--icon" id="btnSnap" title="对齐网格 (Shift+G)" aria-label="对齐网格" aria-pressed="false"><svg class="icon"><use href="#i-magnet" /></svg></button>
+    </div>
+
+    <div class="topbar__group" role="group" aria-label="录制与回放">
+      <button class="btn btn--icon btn--record" id="btnRecord" title="开始/停止计时录制 (F9)" aria-label="录制" aria-pressed="false"><svg class="icon"><use href="#i-record" /></svg></button>
+      <span class="clock" id="clock" title="本次会话计时">00:00</span>
+      <button class="btn btn--icon" id="btnPlay" title="回放笔迹 (F10)" aria-label="回放"><svg class="icon"><use href="#i-play" /></svg></button>
+    </div>
+
+    <div class="topbar__group topbar__group--right" role="group" aria-label="文件">
+      <button class="btn btn--icon" id="btnMath" title="数学符号面板 (M)" aria-label="数学符号" aria-pressed="false"><svg class="icon"><use href="#i-fx" /></svg></button>
+      <button class="btn btn--icon" id="btnHelp" title="帮助与快捷键 (?)" aria-label="帮助"><svg class="icon"><use href="#i-help" /></svg></button>
+      <div class="menu-wrap">
+        <button class="btn btn--icon" id="btnMenu" title="更多操作" aria-label="更多操作" aria-haspopup="true" aria-expanded="false"><svg class="icon"><use href="#i-menu" /></svg></button>
+        <div class="menu" id="fileMenu" role="menu" hidden>
+          <button class="menu__item" data-act="save-json" role="menuitem"><svg class="icon"><use href="#i-download" /></svg>导出为 .wbjson 工程</button>
+          <button class="menu__item" data-act="open-json" role="menuitem"><svg class="icon"><use href="#i-upload" /></svg>导入 .wbjson 工程</button>
+          <button class="menu__item" data-act="export-png" role="menuitem"><svg class="icon"><use href="#i-download" /></svg>导出 PNG 图片</button>
+          <button class="menu__item" data-act="export-svg" role="menuitem"><svg class="icon"><use href="#i-download" /></svg>导出 SVG 矢量图</button>
+          <button class="menu__item" data-act="print" role="menuitem"><svg class="icon"><use href="#i-download" /></svg>打印 / 存为 PDF</button>
+          <div class="menu__sep"></div>
+          <button class="menu__item" data-act="board-white" role="menuitem"><svg class="icon"><use href="#i-fill" /></svg>板面：纯白</button>
+          <button class="menu__item" data-act="board-eye" role="menuitem"><svg class="icon"><use href="#i-fill" /></svg>板面：护眼米色</button>
+          <button class="menu__item" data-act="board-dark" role="menuitem"><svg class="icon"><use href="#i-fill" /></svg>板面：深色（墨板）</button>
+          <div class="menu__sep"></div>
+          <button class="menu__item menu__item--danger" data-act="clear" role="menuitem"><svg class="icon"><use href="#i-trash" /></svg>清空白板</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== 悬浮工具条 ===== -->
+  <aside class="panel toolbar" id="toolbar" style="left:16px; top:76px;">
+    <div class="panel__grip" data-drag-handle title="拖动工具条">
+      <svg class="icon icon--sm"><use href="#i-grip" /></svg>
+      <span class="panel__grip-label">工具</span>
+      <button class="btn btn--icon btn--xs" id="btnCollapseTools" title="折叠/展开 (Ctrl+B)" aria-label="折叠工具条"><svg class="icon"><use href="#i-chevron" /></svg></button>
+    </div>
+    <div class="toolbar__body" id="toolbarBody">
+      <div class="tool-grid" id="toolGrid" role="toolbar" aria-label="绘制工具"><!-- 由 JS 填充 --></div>
+      <div class="toolbar__divider"></div>
+      <div class="quick" id="quickActions">
+        <button class="btn btn--icon" data-quick="undo" title="撤销"><svg class="icon"><use href="#i-undo" /></svg></button>
+        <button class="btn btn--icon" data-quick="redo" title="重做"><svg class="icon"><use href="#i-redo" /></svg></button>
+        <button class="btn btn--icon" data-quick="duplicate" title="复制选中 (Ctrl+D)"><svg class="icon"><use href="#i-copy" /></svg></button>
+        <button class="btn btn--icon" data-quick="front" title="置于顶层"><svg class="icon"><use href="#i-front" /></svg></button>
+        <button class="btn btn--icon" data-quick="back" title="置于底层"><svg class="icon"><use href="#i-back" /></svg></button>
+        <button class="btn btn--icon btn--danger" data-quick="delete" title="删除选中 (Del)"><svg class="icon"><use href="#i-trash" /></svg></button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== 样式面板 ===== -->
+  <aside class="panel stylebar" id="stylebar" style="left:16px; bottom:56px;">
+    <div class="panel__grip" data-drag-handle title="拖动样式面板">
+      <svg class="icon icon--sm"><use href="#i-grip" /></svg>
+      <span class="panel__grip-label">样式</span>
+    </div>
+    <div class="stylebar__body">
+      <div class="swatches" id="swatches" role="group" aria-label="颜色"></div>
+      <div class="style-row">
+        <label class="style-row__label" for="colorInput">自定义</label>
+        <input type="color" id="colorInput" class="color-input" value="#1f2937" aria-label="自定义颜色" />
+        <label class="style-row__label" for="fillToggle">填充</label>
+        <button class="btn btn--icon btn--xs" id="fillToggle" title="形状填充" aria-pressed="false"><svg class="icon"><use href="#i-fill" /></svg></button>
+      </div>
+      <div class="style-row">
+        <label class="style-row__label" for="sizeInput">粗细</label>
+        <input type="range" id="sizeInput" min="1" max="32" step="1" value="3" aria-label="笔粗细" />
+        <output class="style-row__out" id="sizeOut">3px</output>
+      </div>
+      <div class="style-row">
+        <label class="style-row__label" for="opacityInput">不透明</label>
+        <input type="range" id="opacityInput" min="10" max="100" step="5" value="100" aria-label="不透明度" />
+        <output class="style-row__out" id="opacityOut">100%</output>
+      </div>
+      <div class="style-row">
+        <label class="style-row__label" for="fontInput">字号</label>
+        <input type="range" id="fontInput" min="12" max="72" step="2" value="24" aria-label="字号" />
+        <output class="style-row__out" id="fontOut">24px</output>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== 数学面板 ===== -->
+  <aside class="panel mathpanel" id="mathPanel" style="right:16px; top:76px;" hidden>
+    <div class="panel__grip" data-drag-handle title="拖动数学面板">
+      <svg class="icon icon--sm"><use href="#i-grip" /></svg>
+      <span class="panel__grip-label">数学草稿</span>
+      <button class="btn btn--icon btn--xs" id="btnCloseMath" title="关闭" aria-label="关闭数学面板"><svg class="icon"><use href="#i-close" /></svg></button>
+    </div>
+    <div class="mathpanel__body">
+      <div class="tex">
+        <label class="sr-only" for="texInput">LaTeX 速记</label>
+        <input id="texInput" class="tex__input" type="text" placeholder="LaTeX 速记，如 x^2 + \frac{-b}{2a}" autocomplete="off" spellcheck="false" />
+        <button class="btn btn--sm" id="texInsert" title="把公式作为文字插入画板">插入</button>
+      </div>
+      <div class="tex__preview" id="texPreview" aria-live="polite">预览：—</div>
+      <div class="mathpanel__tabs" id="mathTabs" role="tablist"></div>
+      <div class="mathpanel__grid" id="mathGrid"></div>
+      <div class="mathpanel__examples" id="mathExamples"></div>
+      <p class="hint">提示：支持 <code>\sqrt{}</code>、<code>\frac{}{}</code>、<code>^{}_{}​</code>、希腊字母与常用算符，转换结果以 Unicode 文本落板。</p>
+    </div>
+  </aside>
+
+  <!-- ===== 回放进度条 ===== -->
+  <div class="playback" id="playback" hidden>
+    <button class="btn btn--icon" id="btnPlayToggle" title="暂停/继续" aria-label="暂停或继续"><svg class="icon"><use href="#i-stop" /></svg></button>
+    <input type="range" id="playScrub" min="0" max="1000" value="0" aria-label="回放进度" />
+    <span class="playback__time" id="playTime">00:00 / 00:00</span>
+    <select id="playSpeed" class="playback__speed" aria-label="回放速度">
+      <option value="0.5">0.5×</option>
+      <option value="1" selected>1×</option>
+      <option value="2">2×</option>
+      <option value="4">4×</option>
+    </select>
+    <button class="btn btn--icon" id="btnPlayClose" title="退出回放" aria-label="退出回放"><svg class="icon"><use href="#i-close" /></svg></button>
+  </div>
+
+  <!-- ===== 底部状态条 ===== -->
+  <footer class="statusbar" id="statusbar">
+    <span id="statusTool" class="status__chip status__chip--tool">钢笔</span>
+    <span id="statusHint" class="status__hint">按住 Space 拖动平移 · 滚轮缩放 · 双击文字工具可编辑</span>
+    <span class="status__spacer"></span>
+    <span id="statusSel" class="status__chip" hidden>已选 0</span>
+    <span id="statusCount" class="status__chip">0 个元素</span>
+    <span id="statusCoord" class="status__chip status__chip--mono">0, 0</span>
+    <span id="statusSave" class="status__chip status__chip--save" title="自动保存到浏览器本地">已保存</span>
+  </footer>
+
+  <!-- ===== 帮助弹窗 ===== -->
+  <div class="modal" id="helpModal" hidden>
+    <div class="modal__scrim" data-close-modal></div>
+    <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <header class="modal__head">
+        <h2 id="helpTitle">帮助与快捷键</h2>
+        <button class="btn btn--icon" data-close-modal title="关闭" aria-label="关闭"><svg class="icon"><use href="#i-close" /></svg></button>
+      </header>
+      <div class="modal__body">
+        <section>
+          <h3>绘制</h3>
+          <ul class="keys" id="helpTools"></ul>
+        </section>
+        <section>
+          <h3>画布操作</h3>
+          <ul class="keys">
+            <li><kbd>Space</kbd> + 拖动 / 中键拖动 / 双指拖动<em>平移画布</em></li>
+            <li><kbd>滚轮</kbd> / <kbd>Ctrl</kbd>+<kbd>滚轮</kbd> / 双指捏合<em>缩放</em></li>
+            <li><kbd>+</kbd> <kbd>−</kbd> <kbd>0</kbd> <kbd>1</kbd><em>放大 / 缩小 / 100% / 适应内容</em></li>
+            <li><kbd>Alt</kbd> + 拖动<em>临时平移</em></li>
+          </ul>
+        </section>
+        <section>
+          <h3>编辑与文件</h3>
+          <ul class="keys">
+            <li><kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd><em>撤销 / 重做</em></li>
+            <li><kbd>Ctrl</kbd>+<kbd>D</kbd><em>复制选中</em></li>
+            <li><kbd>Ctrl</kbd>+<kbd>A</kbd><em>全选</em></li>
+            <li><kbd>Delete</kbd><em>删除选中</em></li>
+            <li><kbd>方向键</kbd><em>微调选中（Shift 为 10 倍）</em></li>
+            <li><kbd>Ctrl</kbd>+<kbd>S</kbd><em>导出 .wbjson 工程</em></li>
+            <li><kbd>Ctrl</kbd>+<kbd>P</kbd><em>打印 / 存为 PDF</em></li>
+            <li><kbd>G</kbd> <kbd>M</kbd> <kbd>F9</kbd> <kbd>F10</kbd> <kbd>?</kbd><em>网格 / 数学面板 / 录制 / 回放 / 帮助</em></li>
+          </ul>
+        </section>
+        <section>
+          <h3>数学草稿</h3>
+          <p>数学面板把常见 LaTeX 速记转换为 Unicode 文本，无需联网、无需公式渲染引擎。例如 <code>\frac{-b \pm \sqrt{b^2-4ac}}{2a}</code> 会变成可编辑的一行文本，落板后仍可用文字工具修改。</p>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 提示气泡 ===== -->
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <!-- 用于文件导入 / 打印 -->
+  <input type="file" id="fileInput" accept=".wbjson,.json,application/json" hidden />
+  <div id="printArea" class="print-area" aria-hidden="true"></div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
