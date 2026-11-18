@@ -1,0 +1,41 @@
+@inject BoardState State
+@inject AppController App
+@implements IDisposable
+
+<footer class="statusbar" id="statusbar">
+    <span id="statusTool" class="status__chip status__chip--tool">@ToolName</span>
+    <span id="statusHint" class="status__hint">@ToolHint</span>
+    <span class="status__spacer"></span>
+    @if (State.Selection.Count > 0)
+    {
+        <span id="statusSel" class="status__chip">已选 @State.Selection.Count</span>
+    }
+    <span id="statusCount" class="status__chip">@State.Elements.Count 个元素</span>
+    <span id="statusCoord" class="status__chip status__chip--mono">@Coord</span>
+    <span id="statusSave" class="status__chip status__chip--save @(App.IsSaving ? "is-dirty" : "")" title="自动保存到浏览器本地">
+        @(App.IsSaving ? "保存中…" : "已保存")
+    </span>
+</footer>
+
+@code {
+    private System.Threading.Timer? _timer;
+
+    private ToolDef? CurrentTool => ToolsService.ToolList.FirstOrDefault(t => t.Id == State.Tool);
+    private string ToolName => CurrentTool?.Name ?? State.Tool;
+    private string ToolHint => CurrentTool?.Hint ?? "";
+    private string Coord
+    {
+        get
+        {
+            var p = State.Interaction.Pointer;
+            return p is null ? "—, —" : $"{Math.Round(p.X)}, {Math.Round(p.Y)}";
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        _timer = new System.Threading.Timer(_ => _ = InvokeAsync(StateHasChanged), null, 0, 200);
+    }
+
+    public void Dispose() => _timer?.Dispose();
+}

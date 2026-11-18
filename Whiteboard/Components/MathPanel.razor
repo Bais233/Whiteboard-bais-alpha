@@ -1,0 +1,118 @@
+@inject BoardState State
+@inject AppController App
+@inject IJSRuntime JS
+@implements IDisposable
+
+<aside class="panel mathpanel" id="mathPanel" hidden="@(!App.MathOpen)" style="right:16px; top:76px;">
+    <div class="panel__grip" data-drag-handle title="拖动数学面板">
+        <svg class="icon icon--sm"><use href="#i-grip"></use></svg>
+        <span class="panel__grip-label">数学草稿</span>
+        <button class="btn btn--icon btn--xs" id="btnCloseMath" title="关闭" aria-label="关闭数学面板" @onclick="() => App.CloseMathPanel()">
+            <svg class="icon"><use href="#i-close"></use></svg>
+        </button>
+    </div>
+    <div class="mathpanel__body">
+        <div class="tex">
+            <label class="sr-only" for="texInput">LaTeX 速记</label>
+            <input id="texInput" class="tex__input" type="text" @ref="_texInput"
+                   placeholder="LaTeX 速记，如 x^2 + \frac{-b}{2a}" autocomplete="off" spellcheck="false"
+                   @bind="_tex" @bind:event="oninput" @onkeydown="OnTexKeyDown" />
+            <button class="btn btn--sm" id="texInsert" title="把公式作为文字插入画板" @onclick="InsertAsync">插入</button>
+        </div>
+        <div class="tex__preview" id="texPreview" aria-live="polite">预览：@Preview</div>
+        <div class="mathpanel__tabs" id="mathTabs" role="tablist">
+            @foreach (var group in MathService.SymbolGroups)
+            {
+                <button type="button" class="btn" role="tab" aria-selected="@(group.Id == _tab ? "true" : "false")"
+                        @onclick="() => _tab = group.Id">@group.Label</button>
+            }
+        </div>
+        <div class="mathpanel__grid" id="mathGrid">
+            @foreach (var symbol in CurrentGroup.Items)
+            {
+                <button type="button" class="sym" title="@($"插入 {symbol}")" @onclick="() => App.InsertSymbol(symbol)">@symbol</button>
+            }
+        </div>
+        <div class="mathpanel__examples" id="mathExamples">
+            @foreach (var example in MathService.TexExamples.Take(4))
+            {
+                <button type="button" class="btn btn--sm" title="@example" @onclick="() => UseExampleAsync(example)">
+                    @(example.Length > 14 ? example[..13] + "…" : example)
+                </button>
+            }
+        </div>
+        <p class="hint">提示：支持 <code>\sqrt{}</code>、<code>\frac{}{}</code>、<code>^{}_{}</code>、希腊字母与常用算符，转换结果以 Unicode 文本落板。</p>
+    </div>
+</aside>
+
+@code {
+    private string _tab = MathService.SymbolGroups[0].Id;
+    private string _tex = "";
+    private ElementReference _texInput;
+    private bool _wasOpen;
+
+    private MathService.SymbolGroup CurrentGroup =>
+        MathService.SymbolGroups.FirstOrDefault(g => g.Id == _tab) ?? MathService.SymbolGroups[0];
+
+    private string Preview => string.IsNullOrWhiteSpace(_tex) ? "—" : MathService.TexToUnicode(_tex);
+
+    protected override void OnInitialized()
+    {
+        State.UiChanged += OnChanged;
+    }
+
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (App.MathOpen && !_wasOpen)
+        {
+            _wasOpen = true;
+            await Task.Yield();
+            await FocusInputAsync();
+        }
+        else if (!App.MathOpen)
+        {
+            _wasOpen = false;
+        }
+    }
+
+    private async Task FocusInputAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("whiteboard.focus", "#texInput");
+        }
+        catch
+        {
+            // 忽略聚焦失败
+        }
+    }
+
+    private async Task UseExampleAsync(string example)
+    {
+        _tex = example;
+        await FocusInputAsync();
+    }
+
+    private async Task OnTexKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await InsertAsync();
+        }
+    }
+
+    private async Task InsertAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_tex)) return;
+        App.InsertTex(_tex);
+        _tex = "";
+        await FocusInputAsync();
+    }
+
+    public void Dispose()
+    {
+        State.UiChanged -= OnChanged;
+    }
+}

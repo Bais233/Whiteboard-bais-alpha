@@ -1,0 +1,25 @@
+@inject AppController App
+@implements IDisposable
+
+<div class="toasts" aria-live="polite">
+    @foreach (var toast in App.Toasts)
+    {
+        <div class="toast @(toast.Kind == "ok" ? "toast--ok" : toast.Kind == "err" ? "toast--err" : "") @(toast.Leaving ? "is-out" : "")">
+            @toast.Message
+        </div>
+    }
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        App.ToastsChanged += OnChanged;
+    }
+
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        App.ToastsChanged -= OnChanged;
+    }
+}

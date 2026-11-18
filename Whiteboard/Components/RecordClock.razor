@@ -1,0 +1,15 @@
+@inject BoardState State
+@implements IDisposable
+
+<span class="clock @(State.Session.Recording ? "is-recording" : "")">@Num.FormatTime(State.SessionTime())</span>
+
+@code {
+    private System.Threading.Timer? _timer;
+
+    protected override void OnInitialized()
+    {
+        _timer = new System.Threading.Timer(_ => _ = InvokeAsync(StateHasChanged), null, 0, 500);
+    }
+
+    public void Dispose() => _timer?.Dispose();
+}
