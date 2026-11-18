@@ -951,8 +951,21 @@
   }
 
   function attachInput() {
+    const activePointers = new Set();
+    const touchStarts = new Map();
+    let lastTap = null;
+    let multiTouch = false;
+
     canvas.addEventListener('pointerdown', (e) => {
-      if (editorOpen) e.preventDefault();
+      if (editorOpen || e.pointerType === 'touch') e.preventDefault();
+      activePointers.add(e.pointerId);
+      if (e.pointerType === 'touch') {
+        touchStarts.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now() });
+      }
+      if (activePointers.size > 1) {
+        multiTouch = true;
+        lastTap = null;
+      }
       try {
         canvas.setPointerCapture(e.pointerId);
       } catch {
@@ -969,9 +982,36 @@
       } catch {
         /* ignore */
       }
+      activePointers.delete(e.pointerId);
+      const start = touchStarts.get(e.pointerId);
+      touchStarts.delete(e.pointerId);
+
+      // 触屏双击：编辑文字/便签，或在空白处新建文字
+      if (
+        e.pointerType === 'touch' &&
+        start &&
+        !editorOpen &&
+        !multiTouch &&
+        activePointers.size === 0 &&
+        performance.now() - start.t < 350 &&
+        Math.hypot(e.clientX - start.x, e.clientY - start.y) < 12
+      ) {
+        const now = performance.now();
+        if (lastTap && now - lastTap.t < 400 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 26) {
+          lastTap = null;
+          dotNetRef?.invokeMethodAsync('DoubleClick', pointerPayload(e)).catch(() => {});
+        } else {
+          lastTap = { x: e.clientX, y: e.clientY, t: now };
+        }
+      }
+
+      if (activePointers.size === 0) multiTouch = false;
       dotNetRef?.invokeMethodAsync('PointerUp', pointerPayload(e)).catch(() => {});
     });
     canvas.addEventListener('pointercancel', (e) => {
+      activePointers.delete(e.pointerId);
+      touchStarts.delete(e.pointerId);
+      if (activePointers.size === 0) multiTouch = false;
       dotNetRef?.invokeMethodAsync('PointerCancel', pointerPayload(e)).catch(() => {});
     });
     canvas.addEventListener('pointerleave', () => {
@@ -1077,6 +1117,10 @@
     return { w: view.w || window.innerWidth, h: view.h || window.innerHeight, dpr: view.dpr || 1 };
   };
 
+  wb.getCamera = function () {
+    return scene ? { x: scene.camera.x, y: scene.camera.y, scale: scene.camera.scale } : null;
+  };
+
   wb.render = function (json) {
     try {
       scene = JSON.parse(json);
@@ -1139,4 +1183,39 @@
       return false;
     }
   };
+
+  /* ------------------------------------------------------------ PWA 安装 */
+
+  let deferredInstallPrompt = null;
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+  });
+  window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+  });
+
+  wb.canInstall = function () {
+    return !!deferredInstallPrompt;
+  };
+
+  wb.installPwa = async function () {
+    if (!deferredInstallPrompt) return 'unavailable';
+    const prompt = deferredInstallPrompt;
+    deferredInstallPrompt = null;
+    try {
+      prompt.prompt();
+      const choice = await prompt.userChoice;
+      return choice?.outcome || 'dismissed';
+    } catch {
+      return 'dismissed';
+    }
+  };
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js').catch(() => {});
+    });
+  }
 })();

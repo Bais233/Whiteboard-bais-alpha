@@ -53,6 +53,9 @@ public sealed class ToolsService
     private PointD _pinchMid = new();
     private double _pinchScale = 1;
     private bool _laserAnimating;
+    private string _pointerType = "mouse";
+
+    private bool IsTouch => _pointerType == "touch";
 
     public ToolsService(BoardState state, RenderService render, HistoryService history, EditorService editor)
     {
@@ -113,7 +116,7 @@ public sealed class ToolsService
 
     private bool EraseAt(double wx, double wy)
     {
-        var r = EraseScreenRadius / _state.Camera.Scale;
+        var r = (IsTouch ? 18 : EraseScreenRadius) / _state.Camera.Scale;
         var hit = Geometry.PickElement(_state.Elements, wx, wy, r);
         if (hit is null) return false;
         if (Elements.PointTools.Contains(hit.Type))
@@ -230,10 +233,11 @@ public sealed class ToolsService
     private (Element El, string Handle)? PickHandle(double sx, double sy)
     {
         if (_state.Selection.Count != 1) return null;
+        var tolerance = IsTouch ? 18 : 8;
         var el = _state.SelectedElements()[0];
         foreach (var (id, p) in HandlesFor(el))
         {
-            if (Math.Abs(p.X - sx) <= 8 && Math.Abs(p.Y - sy) <= 8) return (el, id);
+            if (Math.Abs(p.X - sx) <= tolerance && Math.Abs(p.Y - sy) <= tolerance) return (el, id);
         }
         return null;
     }
@@ -242,17 +246,29 @@ public sealed class ToolsService
 
     public void PointerDown(PointerEventDto e)
     {
+        _pointerType = e.PointerType ?? "mouse";
         var sp = new PointD(e.X, e.Y);
         var wp = ScreenToWorld(sp);
         _pointers[e.PointerId] = sp;
 
         if (_pointers.Count == 2)
         {
+            // 双指手势开始：放弃正在进行的单指绘制，避免手掌误触留下笔迹
+            if (_drag is not null)
+            {
+                if (_drag.Mode is "draw" or "shape" && _drag.El is not null)
+                {
+                    _state.Elements.Remove(_drag.El);
+                }
+                _state.Interaction.Marquee = null;
+                _drag = null;
+            }
             var (dist, mid, scale) = PinchState();
             _pinchDist = dist;
             _pinchMid = mid;
             _pinchScale = scale;
             _drag = new DragState { Mode = "pinch" };
+            _render.RequestRender();
             return;
         }
 
@@ -286,7 +302,7 @@ public sealed class ToolsService
                 };
                 return;
             }
-            var hit = Geometry.PickElement(_state.Elements, wp.X, wp.Y, 7 / _state.Camera.Scale);
+            var hit = Geometry.PickElement(_state.Elements, wp.X, wp.Y, (IsTouch ? 12 : 7) / _state.Camera.Scale);
             if (hit is not null)
             {
                 if (e.ShiftKey)
@@ -384,6 +400,7 @@ public sealed class ToolsService
 
     public void PointerMove(PointerEventDto e)
     {
+        _pointerType = e.PointerType ?? "mouse";
         var sp = new PointD(e.X, e.Y);
         var wp = ScreenToWorld(sp);
         _state.Interaction.Pointer = wp;
@@ -405,7 +422,7 @@ public sealed class ToolsService
             {
                 var handle = PickHandle(sp.X, sp.Y);
                 var hit = handle is null
-                    ? Geometry.PickElement(_state.Elements, wp.X, wp.Y, 7 / _state.Camera.Scale)
+                    ? Geometry.PickElement(_state.Elements, wp.X, wp.Y, (IsTouch ? 12 : 7) / _state.Camera.Scale)
                     : null;
                 _render.SetCursor(handle is not null || hit is not null ? "move" : "select");
             }
@@ -655,8 +672,9 @@ public sealed class ToolsService
 
     public void DoubleClick(PointerEventDto e)
     {
+        _pointerType = e.PointerType ?? "mouse";
         var wp = _state.ScreenToWorld(e.X, e.Y);
-        var hit = Geometry.PickElement(_state.Elements, wp.X, wp.Y, 8 / _state.Camera.Scale);
+        var hit = Geometry.PickElement(_state.Elements, wp.X, wp.Y, (IsTouch ? 12 : 8) / _state.Camera.Scale);
         if (hit is not null && hit.IsTextLike)
         {
             _editor.Open(hit, false);

@@ -1,5 +1,4 @@
 @page "/"
-@using System.Globalization
 @implements IDisposable
 
 <IconSprite />
@@ -27,7 +26,7 @@
             </button>
         </div>
 
-        <div class="topbar__group" role="group" aria-label="视图">
+        <div class="topbar__group topbar__group--view" role="group" aria-label="视图">
             <button type="button" class="btn btn--icon" id="btnZoomOut" title="缩小 (−)" aria-label="缩小" @onclick="() => App.ZoomOut()">
                 <svg class="icon"><use href="#i-zoom-out"></use></svg>
             </button>
@@ -64,7 +63,7 @@
                     aria-pressed="@(App.MathOpen ? "true" : "false")" @onclick="App.ToggleMathPanel">
                 <svg class="icon"><use href="#i-fx"></use></svg>
             </button>
-            <button type="button" class="btn btn--icon" id="btnHelp" title="帮助与快捷键 (?)" aria-label="帮助" @onclick="App.ToggleHelp">
+            <button type="button" class="btn btn--icon desktop-only" id="btnHelp" title="帮助与快捷键 (?)" aria-label="帮助" @onclick="App.ToggleHelp">
                 <svg class="icon"><use href="#i-help"></use></svg>
             </button>
             <div class="menu-wrap">
@@ -72,47 +71,55 @@
                         aria-haspopup="true" aria-expanded="@(_fileMenuOpen ? "true" : "false")" @onclick="ToggleMenu">
                     <svg class="icon"><use href="#i-menu"></use></svg>
                 </button>
-                @if (_fileMenuOpen)
-                {
-                    <div class="menu-backdrop" @onclick="CloseMenu"></div>
-                    <div class="menu" id="fileMenu" role="menu">
-                        <button type="button" class="menu__item" role="menuitem" @onclick="SaveJsonAsync">
-                            <svg class="icon"><use href="#i-download"></use></svg>导出为 .wbjson 工程
-                        </button>
-                        <button type="button" class="menu__item" role="menuitem" @onclick="OpenJsonAsync">
-                            <svg class="icon"><use href="#i-upload"></use></svg>导入 .wbjson 工程
-                        </button>
-                        <button type="button" class="menu__item" role="menuitem" @onclick="ExportPngAsync">
-                            <svg class="icon"><use href="#i-download"></use></svg>导出 PNG 图片
-                        </button>
-                        <button type="button" class="menu__item" role="menuitem" @onclick="ExportSvgAsync">
-                            <svg class="icon"><use href="#i-download"></use></svg>导出 SVG 矢量图
-                        </button>
-                        <button type="button" class="menu__item" role="menuitem" @onclick="PrintAsync">
-                            <svg class="icon"><use href="#i-download"></use></svg>打印 / 存为 PDF
-                        </button>
-                        <div class="menu__sep"></div>
-                        <button type="button" class="menu__item" role="menuitem" @onclick="BoardWhiteAsync">
-                            <svg class="icon"><use href="#i-fill"></use></svg>板面：纯白
-                        </button>
-                        <button type="button" class="menu__item" role="menuitem" @onclick="BoardEyeAsync">
-                            <svg class="icon"><use href="#i-fill"></use></svg>板面：护眼米色
-                        </button>
-                        <button type="button" class="menu__item" role="menuitem" @onclick="BoardDarkAsync">
-                            <svg class="icon"><use href="#i-fill"></use></svg>板面：深色（墨板）
-                        </button>
-                        <div class="menu__sep"></div>
-                        <button type="button" class="menu__item menu__item--danger" role="menuitem" @onclick="ClearBoardAsync">
-                            <svg class="icon"><use href="#i-trash"></use></svg>清空白板
-                        </button>
-                    </div>
-                }
             </div>
         </div>
     </header>
 
+    @if (_fileMenuOpen)
+    {
+        <div class="menu-backdrop" @onclick="CloseMenu"></div>
+        <div class="menu menu--portal" id="fileMenu" role="menu">
+            <button type="button" class="menu__item" role="menuitem" @onclick="SaveJsonAsync">
+                <svg class="icon"><use href="#i-download"></use></svg>导出为 .wbjson 工程
+            </button>
+            <button type="button" class="menu__item" role="menuitem" @onclick="OpenJsonAsync">
+                <svg class="icon"><use href="#i-upload"></use></svg>导入 .wbjson 工程
+            </button>
+            <button type="button" class="menu__item" role="menuitem" @onclick="ExportPngAsync">
+                <svg class="icon"><use href="#i-download"></use></svg>导出 PNG 图片
+            </button>
+            <button type="button" class="menu__item" role="menuitem" @onclick="ExportSvgAsync">
+                <svg class="icon"><use href="#i-download"></use></svg>导出 SVG 矢量图
+            </button>
+            <button type="button" class="menu__item" role="menuitem" @onclick="PrintAsync">
+                <svg class="icon"><use href="#i-download"></use></svg>打印 / 存为 PDF
+            </button>
+            <div class="menu__sep"></div>
+            <button type="button" class="menu__item" role="menuitem" @onclick="BoardWhiteAsync">
+                <svg class="icon"><use href="#i-fill"></use></svg>板面：纯白
+            </button>
+            <button type="button" class="menu__item" role="menuitem" @onclick="BoardEyeAsync">
+                <svg class="icon"><use href="#i-fill"></use></svg>板面：护眼米色
+            </button>
+            <button type="button" class="menu__item" role="menuitem" @onclick="BoardDarkAsync">
+                <svg class="icon"><use href="#i-fill"></use></svg>板面：深色（墨板）
+            </button>
+            <div class="menu__sep"></div>
+            <button type="button" class="menu__item" role="menuitem" @onclick="InstallPwaAsync">
+                <svg class="icon"><use href="#i-install"></use></svg>安装到主屏幕
+            </button>
+            <button type="button" class="menu__item" role="menuitem" @onclick="HelpAsync">
+                <svg class="icon"><use href="#i-help"></use></svg>帮助与快捷键
+            </button>
+            <div class="menu__sep"></div>
+            <button type="button" class="menu__item menu__item--danger" role="menuitem" @onclick="ClearBoardAsync">
+                <svg class="icon"><use href="#i-trash"></use></svg>清空白板
+            </button>
+        </div>
+    }
+
     <!-- ===== 悬浮工具条 ===== -->
-    <aside class="panel toolbar @(App.ToolsCollapsed ? "is-collapsed" : "")" id="toolbar" style="left:16px; top:76px;">
+    <aside class="panel toolbar desktop-only @(App.ToolsCollapsed ? "is-collapsed" : "")" id="toolbar" style="left:16px; top:76px;">
         <div class="panel__grip" data-drag-handle title="拖动工具条">
             <svg class="icon icon--sm"><use href="#i-grip"></use></svg>
             <span class="panel__grip-label">工具</span>
@@ -145,60 +152,21 @@
     </aside>
 
     <!-- ===== 样式面板 ===== -->
-    <aside class="panel stylebar" id="stylebar" style="left:16px; bottom:56px;">
+    <aside class="panel stylebar desktop-only" id="stylebar" style="left:16px; bottom:56px;">
         <div class="panel__grip" data-drag-handle title="拖动样式面板">
             <svg class="icon icon--sm"><use href="#i-grip"></use></svg>
             <span class="panel__grip-label">样式</span>
         </div>
         <div class="stylebar__body">
-            <div class="swatches" id="swatches" role="group" aria-label="颜色">
-                @foreach (var color in Palette)
-                {
-                    <button type="button" class="swatch" style="@($"background:{color}")" title="@color"
-                            aria-label="@($"颜色 {color}")" aria-pressed="@(State.Style.Color == color ? "true" : "false")"
-                            @onclick="() => App.SetColor(color)"></button>
-                }
-                @foreach (var color in Elements.NoteColors)
-                {
-                    <button type="button" class="swatch" style="@($"background:{color}")" title="@($"便签色 {color}")"
-                            aria-label="@($"便签色 {color}")" aria-pressed="@(State.Style.NoteColor == color ? "true" : "false")"
-                            @onclick="() => App.SetNoteColor(color)"></button>
-                }
-            </div>
-            <div class="style-row">
-                <label class="style-row__label" for="colorInput">自定义</label>
-                <input type="color" id="colorInput" class="color-input" value="@State.Style.Color"
-                       aria-label="自定义颜色" @oninput="OnColorInput" />
-                <label class="style-row__label" for="fillToggle">填充</label>
-                <button type="button" class="btn btn--icon btn--xs" id="fillToggle" title="形状填充"
-                        aria-pressed="@(State.Style.Fill ? "true" : "false")" @onclick="App.ToggleFill">
-                    <svg class="icon"><use href="#i-fill"></use></svg>
-                </button>
-            </div>
-            <div class="style-row">
-                <label class="style-row__label" for="sizeInput">粗细</label>
-                <input type="range" id="sizeInput" min="1" max="32" step="1" value="@((int)Math.Round(State.Style.Size))"
-                       aria-label="笔粗细" style="@FillStyle(SizeFill)" @oninput="OnSizeInput" />
-                <output class="style-row__out" id="sizeOut">@((int)Math.Round(State.Style.Size))px</output>
-            </div>
-            <div class="style-row">
-                <label class="style-row__label" for="opacityInput">不透明</label>
-                <input type="range" id="opacityInput" min="10" max="100" step="5" value="@((int)Math.Round(State.Style.Opacity * 100))"
-                       aria-label="不透明度" style="@FillStyle(OpacityFill)" @oninput="OnOpacityInput" />
-                <output class="style-row__out" id="opacityOut">@((int)Math.Round(State.Style.Opacity * 100))%</output>
-            </div>
-            <div class="style-row">
-                <label class="style-row__label" for="fontInput">字号</label>
-                <input type="range" id="fontInput" min="12" max="72" step="2" value="@((int)Math.Round(State.Style.FontSize))"
-                       aria-label="字号" style="@FillStyle(FontFill)" @oninput="OnFontInput" />
-                <output class="style-row__out" id="fontOut">@((int)Math.Round(State.Style.FontSize))px</output>
-            </div>
+            <StyleControls />
         </div>
     </aside>
 
     <MathPanel />
     <PlaybackBar />
     <StatusBar />
+    <MobileDock />
+    <MobileSheets />
 
     <!-- ===== 帮助弹窗 ===== -->
     @if (App.HelpOpen)
@@ -262,22 +230,8 @@
     private bool _fileMenuOpen;
     private bool _disposed;
 
-    private static readonly string[] Palette =
-    {
-        "#1f2937", "#ffffff", "#ef4444", "#f97316", "#f59e0b", "#eab308",
-        "#22c55e", "#10b981", "#14b8a6", "#0ea5e9", "#3b82f6", "#6366f1",
-        "#8b5cf6", "#d946ef", "#ec4899", "#a16207", "#64748b", "#0f172a",
-    };
-
-    private int SizeFill => (int)Math.Round((State.Style.Size - 1) / 31.0 * 100);
-    private int OpacityFill => (int)Math.Round((State.Style.Opacity * 100 - 10) / 90.0 * 100);
-    private int FontFill => (int)Math.Round((State.Style.FontSize - 12) / 60.0 * 100);
-
-    private static string FillStyle(int pct) => $"--fill: {Math.Clamp(pct, 0, 100)}%";
-
     [Inject] private BoardState State { get; set; } = default!;
     [Inject] private AppController App { get; set; } = default!;
-    [Inject] private ToolsService Tools { get; set; } = default!;
 
     protected override void OnInitialized()
     {
@@ -300,10 +254,20 @@
     private void OnChanged()
     {
         if (_disposed) return;
+        if (_fileMenuOpen && (App.MobilePanel != "none" || App.MathOpen)) _fileMenuOpen = false;
         _ = InvokeAsync(StateHasChanged);
     }
 
-    private void ToggleMenu() => _fileMenuOpen = !_fileMenuOpen;
+    private void ToggleMenu()
+    {
+        _fileMenuOpen = !_fileMenuOpen;
+        if (_fileMenuOpen)
+        {
+            App.CloseMobilePanel();
+            App.CloseMathPanel();
+        }
+    }
+
     private void CloseMenu() => _fileMenuOpen = false;
 
     private async Task RunMenuAsync(string act)
@@ -320,25 +284,12 @@
     private Task BoardWhiteAsync() => RunMenuAsync("board-white");
     private Task BoardEyeAsync() => RunMenuAsync("board-eye");
     private Task BoardDarkAsync() => RunMenuAsync("board-dark");
+    private Task InstallPwaAsync() => RunMenuAsync("install-pwa");
+    private Task HelpAsync() => RunMenuAsync("help");
     private Task ClearBoardAsync() => RunMenuAsync("clear");
 
     private void ReorderFront() => App.Reorder("front");
     private void ReorderBack() => App.Reorder("back");
-
-    private void OnColorInput(ChangeEventArgs e)
-    {
-        var value = e.Value?.ToString();
-        if (!string.IsNullOrWhiteSpace(value)) App.SetColor(value);
-    }
-
-    private void OnSizeInput(ChangeEventArgs e) => App.SetSize(ParseValue(e));
-
-    private void OnOpacityInput(ChangeEventArgs e) => App.SetOpacity(ParseValue(e) / 100.0);
-
-    private void OnFontInput(ChangeEventArgs e) => App.SetFontSize(ParseValue(e));
-
-    private static double ParseValue(ChangeEventArgs e) =>
-        double.TryParse(e.Value?.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var value) ? value : 0;
 
     private async Task OnFileSelected(InputFileChangeEventArgs e)
     {

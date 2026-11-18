@@ -97,6 +97,8 @@ public sealed class UiState
     public bool MathOpen { get; set; }
     public bool ToolsCollapsed { get; set; }
     public bool HelpOpen { get; set; }
+    /// <summary>移动端底部抽屉：none | tools | style</summary>
+    public string MobilePanel { get; set; } = "none";
 }
 
 public sealed class DocumentMeta

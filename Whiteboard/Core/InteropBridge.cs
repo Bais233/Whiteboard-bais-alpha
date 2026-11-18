@@ -54,10 +54,23 @@ public sealed class InteropBridge
     [JSInvokable]
     public void OnViewport(ViewportDto vp)
     {
+        var oldW = _state.Viewport.W;
+        var oldH = _state.Viewport.H;
+        var keepCenter = oldW > 1 && oldH > 1 &&
+                         (Math.Abs(vp.W - oldW) > 1 || Math.Abs(vp.H - oldH) > 1);
+        var center = keepCenter ? _state.ScreenToWorld(oldW / 2, oldH / 2) : null;
+
         _state.Viewport.W = vp.W;
         _state.Viewport.H = vp.H;
         _state.Viewport.Dpr = vp.Dpr;
+
+        if (center is not null)
+        {
+            _state.Camera.X = vp.W / 2 - center.X * _state.Camera.Scale;
+            _state.Camera.Y = vp.H / 2 - center.Y * _state.Camera.Scale;
+        }
         _editor.Sync();
+        _render.RequestRender();
     }
 
     [JSInvokable]

@@ -1,0 +1,79 @@
+@inject BoardState State
+@inject AppController App
+
+<div class="swatches" role="group" aria-label="颜色">
+    @foreach (var color in Palette)
+    {
+        <button type="button" class="swatch" style="@($"background:{color}")" title="@color"
+                aria-label="@($"颜色 {color}")" aria-pressed="@(State.Style.Color == color ? "true" : "false")"
+                @onclick="() => App.SetColor(color)"></button>
+    }
+    @foreach (var color in Elements.NoteColors)
+    {
+        <button type="button" class="swatch" style="@($"background:{color}")" title="@($"便签色 {color}")"
+                aria-label="@($"便签色 {color}")" aria-pressed="@(State.Style.NoteColor == color ? "true" : "false")"
+                @onclick="() => App.SetNoteColor(color)"></button>
+    }
+</div>
+<div class="style-row">
+    <label class="style-row__label" for="@Id("colorInput")">自定义</label>
+    <input type="color" id="@Id("colorInput")" class="color-input" value="@State.Style.Color"
+           aria-label="自定义颜色" @oninput="OnColorInput" />
+    <label class="style-row__label" for="@Id("fillToggle")">填充</label>
+    <button type="button" class="btn btn--icon btn--xs" id="@Id("fillToggle")" title="形状填充"
+            aria-pressed="@(State.Style.Fill ? "true" : "false")" @onclick="App.ToggleFill">
+        <svg class="icon"><use href="#i-fill"></use></svg>
+    </button>
+</div>
+<div class="style-row">
+    <label class="style-row__label" for="@Id("sizeInput")">粗细</label>
+    <input type="range" id="@Id("sizeInput")" min="1" max="32" step="1" value="@((int)Math.Round(State.Style.Size))"
+           aria-label="笔粗细" style="@FillStyle(SizeFill)" @oninput="OnSizeInput" />
+    <output class="style-row__out" id="@Id("sizeOut")">@((int)Math.Round(State.Style.Size))px</output>
+</div>
+<div class="style-row">
+    <label class="style-row__label" for="@Id("opacityInput")">不透明</label>
+    <input type="range" id="@Id("opacityInput")" min="10" max="100" step="5" value="@((int)Math.Round(State.Style.Opacity * 100))"
+           aria-label="不透明度" style="@FillStyle(OpacityFill)" @oninput="OnOpacityInput" />
+    <output class="style-row__out" id="@Id("opacityOut")">@((int)Math.Round(State.Style.Opacity * 100))%</output>
+</div>
+<div class="style-row">
+    <label class="style-row__label" for="@Id("fontInput")">字号</label>
+    <input type="range" id="@Id("fontInput")" min="12" max="72" step="2" value="@((int)Math.Round(State.Style.FontSize))"
+           aria-label="字号" style="@FillStyle(FontFill)" @oninput="OnFontInput" />
+    <output class="style-row__out" id="@Id("fontOut")">@((int)Math.Round(State.Style.FontSize))px</output>
+</div>
+
+@code {
+    [Parameter] public string Prefix { get; set; } = "";
+
+    private string Id(string name) => Prefix + name;
+    private static readonly string[] Palette =
+    {
+        "#1f2937", "#ffffff", "#ef4444", "#f97316", "#f59e0b", "#eab308",
+        "#22c55e", "#10b981", "#14b8a6", "#0ea5e9", "#3b82f6", "#6366f1",
+        "#8b5cf6", "#d946ef", "#ec4899", "#a16207", "#64748b", "#0f172a",
+    };
+
+    private int SizeFill => (int)Math.Round((State.Style.Size - 1) / 31.0 * 100);
+    private int OpacityFill => (int)Math.Round((State.Style.Opacity * 100 - 10) / 90.0 * 100);
+    private int FontFill => (int)Math.Round((State.Style.FontSize - 12) / 60.0 * 100);
+
+    private static string FillStyle(int pct) => $"--fill: {Math.Clamp(pct, 0, 100)}%";
+
+    private void OnColorInput(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+        if (!string.IsNullOrWhiteSpace(value)) App.SetColor(value);
+    }
+
+    private void OnSizeInput(ChangeEventArgs e) => App.SetSize(ParseValue(e));
+
+    private void OnOpacityInput(ChangeEventArgs e) => App.SetOpacity(ParseValue(e) / 100.0);
+
+    private void OnFontInput(ChangeEventArgs e) => App.SetFontSize(ParseValue(e));
+
+    private static double ParseValue(ChangeEventArgs e) =>
+        double.TryParse(e.Value?.ToString(), System.Globalization.NumberStyles.Any,
+            System.Globalization.CultureInfo.InvariantCulture, out var value) ? value : 0;
+}

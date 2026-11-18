@@ -73,6 +73,7 @@ public sealed class AppController
     public bool MathOpen => _state.Ui.MathOpen;
     public bool HelpOpen => _state.Ui.HelpOpen;
     public bool ToolsCollapsed => _state.Ui.ToolsCollapsed;
+    public string MobilePanel => _state.Ui.MobilePanel;
     public bool IsRecording => _state.Session.Recording;
     public PlaybackService Playback => _playback;
 
@@ -113,6 +114,11 @@ public sealed class AppController
             if (string.IsNullOrEmpty(seen))
             {
                 SeedWelcome();
+                if (_state.Viewport.W < 900 || _state.Viewport.H < 640)
+                {
+                    await _render.MeasureAllTextsAsync();
+                    _tools.FitToContent(48);
+                }
                 await _storage.LocalSetAsync(BoardState.FirstRunKey, "1");
             }
             else
@@ -443,14 +449,30 @@ public sealed class AppController
 
     public void ToggleMathPanel()
     {
+        _state.Ui.MobilePanel = "none";
         _state.Ui.MathOpen = !_state.Ui.MathOpen;
         _state.RaiseUiChanged();
     }
 
     public void CloseMathPanel()
     {
-        if (!_state.Ui.MathOpen) return;
+        if (!_state.Ui.MathOpen && _state.Ui.MobilePanel == "none") return;
         _state.Ui.MathOpen = false;
+        _state.RaiseUiChanged();
+    }
+
+    public void ToggleMobilePanel(string panel)
+    {
+        var next = _state.Ui.MobilePanel == panel ? "none" : panel;
+        _state.Ui.MobilePanel = next;
+        if (next != "none") _state.Ui.MathOpen = false;
+        _state.RaiseUiChanged();
+    }
+
+    public void CloseMobilePanel()
+    {
+        if (_state.Ui.MobilePanel == "none") return;
+        _state.Ui.MobilePanel = "none";
         _state.RaiseUiChanged();
     }
 
@@ -462,6 +484,7 @@ public sealed class AppController
 
     public void ToggleHelp()
     {
+        _state.Ui.MobilePanel = "none";
         _state.Ui.HelpOpen = !_state.Ui.HelpOpen;
         _state.RaiseUiChanged();
     }
@@ -530,6 +553,12 @@ public sealed class AppController
                 case "print":
                     await _export.PrintAsync();
                     break;
+                case "install-pwa":
+                    await InstallPwaAsync();
+                    break;
+                case "help":
+                    ToggleHelp();
+                    break;
                 case "board-white":
                     SetBoard("white");
                     break;
@@ -547,6 +576,29 @@ public sealed class AppController
         catch (Exception ex)
         {
             ShowToast(ex.Message, "err", 3600);
+        }
+    }
+
+    public async Task InstallPwaAsync()
+    {
+        try
+        {
+            var result = await _js.InvokeAsync<string>("whiteboard.installPwa");
+            switch (result)
+            {
+                case "accepted":
+                    ShowToast("正在安装到主屏幕…", "ok");
+                    break;
+                case "dismissed":
+                    break;
+                default:
+                    ShowToast("请使用浏览器菜单里的“添加到主屏幕”");
+                    break;
+            }
+        }
+        catch
+        {
+            ShowToast("当前浏览器不支持自动安装，请使用浏览器菜单添加");
         }
     }
 

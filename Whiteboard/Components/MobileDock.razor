@@ -1,0 +1,46 @@
+@inject BoardState State
+@inject AppController App
+@implements IDisposable
+
+<nav class="mobile-dock mobile-only" aria-label="移动端工具栏">
+    @foreach (var id in PrimaryTools)
+    {
+        var tool = ToolsService.ToolList.First(t => t.Id == id);
+        <button type="button" class="btn btn--icon mobile-dock__btn" title="@tool.Name" aria-label="@tool.Name"
+                aria-pressed="@(State.Tool == id ? "true" : "false")" @onclick="() => App.SetTool(id)">
+            <svg class="icon"><use href="@($"#{tool.Icon}")"></use></svg>
+        </button>
+    }
+    <button type="button" class="btn btn--icon mobile-dock__btn mobile-dock__swatch" title="样式" aria-label="样式"
+            aria-pressed="@(App.MobilePanel == "style" ? "true" : "false")" @onclick="OpenStyle">
+        <span class="mobile-dock__color" style="@($"background:{State.Style.Color}")"></span>
+    </button>
+    <button type="button" class="btn btn--icon mobile-dock__btn" title="全部工具" aria-label="全部工具"
+            aria-pressed="@(App.MobilePanel == "tools" ? "true" : "false")" @onclick="OpenTools">
+        <svg class="icon"><use href="#i-grid"></use></svg>
+    </button>
+</nav>
+
+@code {
+    private static readonly string[] PrimaryTools = { "select", "pen", "highlighter", "eraser", "text", "note" };
+
+    protected override void OnInitialized()
+    {
+        State.ToolChanged += OnChanged;
+        State.StyleChanged += OnChanged;
+        State.UiChanged += OnChanged;
+    }
+
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+
+    private void OpenStyle() => App.ToggleMobilePanel("style");
+
+    private void OpenTools() => App.ToggleMobilePanel("tools");
+
+    public void Dispose()
+    {
+        State.ToolChanged -= OnChanged;
+        State.StyleChanged -= OnChanged;
+        State.UiChanged -= OnChanged;
+    }
+}

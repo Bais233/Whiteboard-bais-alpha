@@ -1,0 +1,87 @@
+@inject BoardState State
+@inject AppController App
+@implements IDisposable
+
+@if (App.MobilePanel != "none")
+{
+    <div class="mobile-backdrop mobile-only" @onclick="App.CloseMobilePanel"></div>
+}
+
+@if (App.MobilePanel == "tools")
+{
+    <section class="mobile-sheet mobile-only" aria-label="全部工具">
+        <header class="mobile-sheet__head">
+            <h2>工具</h2>
+            <button type="button" class="btn btn--icon" title="关闭" aria-label="关闭" @onclick="App.CloseMobilePanel">
+                <svg class="icon"><use href="#i-close"></use></svg>
+            </button>
+        </header>
+        <div class="mobile-tool-grid">
+            @foreach (var tool in ToolsService.ToolList)
+            {
+                <button type="button" class="btn btn--tool" aria-pressed="@(State.Tool == tool.Id ? "true" : "false")"
+                        title="@ToolTitle(tool)" @onclick="() => SelectTool(tool.Id)">
+                    <svg class="icon"><use href="@($"#{tool.Icon}")"></use></svg>
+                    <span>@tool.Name</span>
+                </button>
+            }
+        </div>
+        <div class="mobile-sheet__divider"></div>
+        <div class="mobile-quick">
+            <button type="button" class="btn btn--icon" title="撤销" @onclick="() => RunAndClose(App.Undo)"><svg class="icon"><use href="#i-undo"></use></svg></button>
+            <button type="button" class="btn btn--icon" title="重做" @onclick="() => RunAndClose(App.Redo)"><svg class="icon"><use href="#i-redo"></use></svg></button>
+            <button type="button" class="btn btn--icon" title="复制选中" @onclick="() => RunAndClose(App.DuplicateSelection)"><svg class="icon"><use href="#i-copy"></use></svg></button>
+            <button type="button" class="btn btn--icon" title="置于顶层" @onclick="() => RunAndClose(ReorderFront)"><svg class="icon"><use href="#i-front"></use></svg></button>
+            <button type="button" class="btn btn--icon" title="置于底层" @onclick="() => RunAndClose(ReorderBack)"><svg class="icon"><use href="#i-back"></use></svg></button>
+            <button type="button" class="btn btn--icon btn--danger" title="删除选中" @onclick="() => RunAndClose(App.DeleteSelection)"><svg class="icon"><use href="#i-trash"></use></svg></button>
+        </div>
+    </section>
+}
+
+@if (App.MobilePanel == "style")
+{
+    <section class="mobile-sheet mobile-sheet--style" aria-label="样式">
+        <header class="mobile-sheet__head">
+            <h2>样式</h2>
+            <button type="button" class="btn btn--icon" title="关闭" aria-label="关闭" @onclick="App.CloseMobilePanel">
+                <svg class="icon"><use href="#i-close"></use></svg>
+            </button>
+        </header>
+        <div class="stylebar__body">
+            <StyleControls Prefix="mobile-" />
+        </div>
+        <button type="button" class="btn btn--sm mobile-sheet__done" @onclick="App.CloseMobilePanel">完成</button>
+    </section>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        State.UiChanged += OnChanged;
+    }
+
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+
+    private void SelectTool(string id)
+    {
+        App.SetTool(id);
+        App.CloseMobilePanel();
+    }
+
+    private static string ToolTitle(ToolDef tool) =>
+        string.IsNullOrEmpty(tool.Hint) ? tool.Name : $"{tool.Name}：{tool.Hint}";
+
+    private void RunAndClose(Action action)
+    {
+        action();
+        App.CloseMobilePanel();
+    }
+
+    private void ReorderFront() => App.Reorder("front");
+    private void ReorderBack() => App.Reorder("back");
+
+    public void Dispose()
+    {
+        State.UiChanged -= OnChanged;
+    }
+}
