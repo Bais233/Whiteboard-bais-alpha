@@ -35,6 +35,20 @@ npm run test:e2e     # 真实浏览器端到端（Playwright + 内置 Chromium �
 > `test:e2e` 在受限网络下会自动从 npm 包 `@sparticuz/chromium` 解出浏览器；
 > 如本机已有 Chromium，可用 `CHROMIUM_PATH=/usr/bin/chromium npm run test:e2e`。
 
+## .NET 11 版本（Blazor WebAssembly）
+
+`Whiteboard/` 是同一套白板的 .NET 11 完整移植：状态管理、工具状态机、撤销历史、本地存储、导入导出与数学转换均在 C# 中实现；Canvas 渲染、指针/键盘输入、文字编辑浮层等浏览器能力通过 JS interop 完成。功能与原 JS 版本对齐，`.wbjson` 工程互相兼容。
+
+```bash
+# 需要 .NET SDK 11.0.100+
+cd Whiteboard
+
+dotnet run --urls http://localhost:5180    # 开发预览
+dotnet publish -c Release -o dist          # 发布为静态站点
+
+# 发布产物在 dist/wwwroot，可直接放到任意静态服务器
+```
+
 ## 快捷键（节选）
 
 | 按键 | 作用 |

@@ -1,0 +1,16 @@
+@inject BoardState State
+@inject AppController App
+@implements IDisposable
+
+<button class="btn btn--text" title="恢复到 100% (0)" @onclick="() => App.ZoomReset()">@($"{Math.Round(State.Camera.Scale * 100)}%")</button>
+
+@code {
+    private System.Threading.Timer? _timer;
+
+    protected override void OnInitialized()
+    {
+        _timer = new System.Threading.Timer(_ => _ = InvokeAsync(StateHasChanged), null, 0, 150);
+    }
+
+    public void Dispose() => _timer?.Dispose();
+}

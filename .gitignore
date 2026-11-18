@@ -1,4 +1,6 @@
 node_modules/
 dist/
+**/bin/
+**/obj/
 *.log
 .DS_Store
